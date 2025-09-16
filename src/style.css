@@ -1,0 +1,191 @@
+/* Estilos para la pantalla de transición */
+#transition-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 1;
+  transition: opacity 1s ease-out;
+}
+
+#transition-screen img {
+  max-width: 300px;
+  max-height: 200px;
+}
+
+#transition-screen.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #f5f7fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Contenedor principal */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Encabezado */
+header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px 0;
+  background: linear-gradient(135deg, #6e8efb, #a777e3);
+  color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* Área principal con dos paneles */
+.main-container {
+  display: flex;
+  gap: 20px;
+  height: 700px;
+}
+
+/* Panel izquierdo: Vestidor 3D */
+.vestidor-3d {
+  width: 400px;
+  background-color: #e9ecef;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  height: 90%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contenedor de la escena 3D */
+#vestidor-scene {
+  width: 100%;
+  height: 75%;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ccc;
+}
+
+/* Botón para cambiar de avatar */
+.change-avatar-btn {
+  display: block;
+  margin: 10px auto 0;
+  padding: 8px 15px;
+  background-color: #6e8efb;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.change-avatar-btn:hover {
+  background-color: #a777e3;
+}
+
+/* Controles de zoom */
+.zoom-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.zoom-btn {
+  padding: 6px 12px;
+  background-color: #6e8efb;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.3s;
+}
+
+.zoom-btn:hover {
+  background-color: #a777e3;
+}
+
+/* Panel derecho: Armario */
+.armario {
+  flex: 1;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Contenedor de miniaturas de ropa */
+.ropa-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 15px;
+}
+
+/* Cada item de ropa en el armario */
+.ropa-item {
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.ropa-item:hover {
+  transform: scale(1.05);
+}
+
+.ropa-item img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+}
+
+.ropa-item p {
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+/* Responsive: Apila los paneles en móviles */
+@media (max-width: 768px) {
+  .main-container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .vestidor-3d {
+    width: 100%;
+    height: 400px;
+  }
+}

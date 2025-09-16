@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vestidor Virtual 3D</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <!-- Pantalla de transición -->
+  <div id="transition-screen">
+    <img src="/images/nike-logo.png" alt="Logo">
+  </div>
+
+  <div class="container">
+    <header>
+      <h1>Vestidor Virtual</h1>
+      <p>Personaliza tu avatar y prueba ropa en 3D</p>
+    </header>
+
+    <div class="main-container">
+      <div class="vestidor-3d">
+        <div id="vestidor-scene"></div>
+        <button id="change-avatar" class="change-avatar-btn">🔄 Cambiar Avatar</button>
+        <div class="zoom-controls">
+          <button id="zoom-head" class="zoom-btn">Cabeza</button>
+          <button id="zoom-chest" class="zoom-btn">Pecho</button>
+          <button id="zoom-legs" class="zoom-btn">Piernas</button>
+          <button id="zoom-reset" class="zoom-btn">Resetear Vista</button>
+        </div>
+      </div>
+
+      <div class="armario">
+        <h2>Armario</h2>
+        <div class="ropa-container">
+          <div class="ropa-item" data-model="/models/ropa/botas.glb" data-type="shoes">
+            <img src="https://via.placeholder.com/100x100/cccccc/ffffff?text=Botas" alt="Botas">
+            <p>Botas</p>
+          </div>
+          <div class="ropa-item" data-model="/models/ropa/camiseta.glb" data-type="shirt">
+            <img src="https://via.placeholder.com/100x100/cccccc/ffffff?text=Camiseta" alt="Camiseta">
+            <p>Camiseta</p>
+          </div>
+          <div class="ropa-item" data-model="/models/ropa/pantalon.glb" data-type="pants">
+            <img src="https://via.placeholder.com/100x100/cccccc/ffffff?text=Pantalón" alt="Pantalón">
+            <p>Pantalón</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
