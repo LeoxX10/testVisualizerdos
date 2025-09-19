@@ -5,25 +5,48 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: white;
+  background-color: black;
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
   opacity: 1;
-  transition: opacity 1s ease-out;
+  transition: opacity 1s ease-in-out;
 }
 
-#transition-screen img {
-  max-width: 300px;
-  max-height: 200px;
+/* Contenedor para las imágenes */
+#transition-images {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: auto;
+  height: auto;
+}
+
+/* Estilos para las imágenes */
+#transition-images img {
+  position: absolute;
+  max-width: 700px;
+  max-height: 500px;
+  width: auto;
+  height: auto;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+#transition-images img.active {
+  opacity: 1;
+}
+
+#transition-images img.hide {
+  opacity: 0;
 }
 
 #transition-screen.hide {
   opacity: 0;
   pointer-events: none;
 }
-
 /* Reset básico */
 * {
   margin: 0;
@@ -43,6 +66,7 @@ body {
   max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
+  position: relative;
 }
 
 /* Encabezado */
@@ -71,6 +95,7 @@ header p {
   display: flex;
   gap: 20px;
   height: 700px;
+  position: relative;
 }
 
 /* Panel izquierdo: Vestidor 3D */
@@ -83,15 +108,67 @@ header p {
   height: 90%;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 /* Contenedor de la escena 3D */
 #vestidor-scene {
   width: 100%;
-  height: 75%;
+  height: 90%;
   border-radius: 8px;
   overflow: hidden;
   background-color: #ccc;
+  position: relative;
+}
+
+/* Círculos clickeables sobre el personaje */
+#body-circles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.circle {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: rgba(0, 123, 255, 0.7);
+  border: 2px solid white;
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 12px;
+  transition: transform 0.2s, opacity 0.2s;
+  z-index: 10;
+}
+
+.circle:hover {
+  transform: scale(1.2);
+}
+
+.head-circle {
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.chest-circle {
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.legs-circle {
+  top: 70%;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 /* Botón para cambiar de avatar */
@@ -112,47 +189,52 @@ header p {
   background-color: #a777e3;
 }
 
-/* Controles de zoom */
-.zoom-controls {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.zoom-btn {
-  padding: 6px 12px;
-  background-color: #6e8efb;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.3s;
-}
-
-.zoom-btn:hover {
-  background-color: #a777e3;
-}
-
-/* Panel derecho: Armario */
-.armario {
-  flex: 1;
+/* Menús desplegables */
+.dropdown-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300px;
   background-color: white;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 20;
+  transform: translateX(-100%);
+  transition: transform 0.5s ease-in-out;
+  padding: 15px;
+  display: none;
+  opacity: 0;
 }
 
-/* Contenedor de miniaturas de ropa */
-.ropa-container {
+.dropdown-menu.open {
+  display: block;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.head-menu {
+  top: 20%;
+  left: 100%;
+}
+
+.chest-menu {
+  top: 40%;
+  left: 100%;
+}
+
+.legs-menu {
+  top: 70%;
+  left: 100%;
+}
+
+/* Contenedor de miniaturas de ropa en los menús */
+.dropdown-content {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
 }
 
-/* Cada item de ropa en el armario */
+/* Cada item de ropa en el menú */
 .ropa-item {
   text-align: center;
   cursor: pointer;
@@ -164,8 +246,8 @@ header p {
 }
 
 .ropa-item img {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
   border-radius: 8px;
   background-color: #f0f0f0;
@@ -187,5 +269,14 @@ header p {
   .vestidor-3d {
     width: 100%;
     height: 400px;
+  }
+
+  .dropdown-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.95);
   }
 }

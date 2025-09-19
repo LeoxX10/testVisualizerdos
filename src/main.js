@@ -1,22 +1,52 @@
-// Ocultar la pantalla de transición después de 2 segundos
-window.addEventListener('load', () => {
+// Función para manejar la transición de imágenes
+function handleTransition() {
   const transitionScreen = document.getElementById('transition-screen');
+  const nikeLogo = document.getElementById('nike-logo');
+  const dragonFont = document.getElementById('dragon-font');
+
+  // Mostrar el logo de Nike con fade in
+  nikeLogo.classList.add('active');
+
+  // Esperar 1.5 segundos y luego hacer fade out
   setTimeout(() => {
-    transitionScreen.classList.add('hide');
-    // Eliminar el elemento después de que termine la animación
+    nikeLogo.classList.remove('active');
+    nikeLogo.classList.add('hide');
+
+    // Cambiar a la imagen de dragonFont con fade in
     setTimeout(() => {
-      transitionScreen.style.display = 'none';
-    }, 1000); // Tiempo igual a la duración de la transición en CSS
-  }, 0); // 2 segundos
+      dragonFont.classList.add('active');
+
+      // Esperar 2 segundos y luego hacer fade out de dragonFont
+      setTimeout(() => {
+        dragonFont.classList.remove('active');
+        dragonFont.classList.add('hide');
+
+        // Esperar 1 segundo y luego hacer fade out del fondo negro
+        setTimeout(() => {
+          transitionScreen.classList.add('hide');
+          setTimeout(() => {
+            transitionScreen.style.display = 'none';
+          }, 1000); // Tiempo igual a la duración de la transición en CSS
+        }, 1000); // Esperar 1 segundo después de que dragonFont desaparezca
+      }, 2000); // Mostrar dragonFont por 2 segundos
+    }, 500); // Tiempo para el cambio a dragonFont
+  }, 1500); // Mostrar logo de Nike por 1.5 segundos
+}
+
+// Ejecutar la transición inmediatamente
+document.addEventListener('DOMContentLoaded', () => {
+  handleTransition();
 });
 
+// Resto del código para el vestidor 3D
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { FocusShader } from 'three/addons/shaders/FocusShader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { TWEEN } from 'three/examples/jsm/libs/tween.module.min.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { FocusShader } from 'three/examples/jsm/shaders/FocusShader.js';
 
 // 1. Configuración básica de la escena
 const scene = new THREE.Scene();
@@ -34,9 +64,11 @@ const camera = new THREE.PerspectiveCamera(
 // Posición inicial de la cámara para vista general
 camera.position.set(0, 0.5, 2.5);
 
-// 3. Configuración del renderizador
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+// 3. Configuración del renderizador con sombras
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(vestidorScene.clientWidth, vestidorScene.clientHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.getElementById('vestidor-scene').appendChild(renderer.domElement);
 
 // Configuración del EffectComposer para el efecto de blur
@@ -50,17 +82,28 @@ focusShader.uniforms.screenWidth.value = vestidorScene.clientWidth;
 focusShader.uniforms.screenHeight.value = vestidorScene.clientHeight;
 composer.addPass(focusShader);
 
-// 4. Añadir luces a la escena
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+// 4. Añadir luces a la escena con sombras
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
+
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(1, 1, 1);
+directionalLight.castShadow = true;
+directionalLight.shadow.mapSize.width = 1024;
+directionalLight.shadow.mapSize.height = 1024;
+directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.camera.far = 50;
 scene.add(directionalLight);
+
+// Luz adicional para mejorar las sombras
+const hemilight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.3);
+scene.add(hemilight);
 
 // 5. Cargar el avatar
 const loader = new GLTFLoader();
 let avatar = null;
 let currentAvatar = 1;
+let currentClothes = {};
 
 // Función para cargar un avatar
 function cargarAvatar(modelPath) {
@@ -75,14 +118,96 @@ function cargarAvatar(modelPath) {
       avatar.scale.set(0.7, 0.7, 0.7);
       avatar.position.set(0, -0.68, 0);
       avatar.rotation.y = Math.PI / -5;
+
+      // Habilitar sombras para el avatar
+      avatar.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+
       scene.add(avatar);
       camera.lookAt(0, 0, 0);
+
+      // Si hay ropa cargada, ajustarla al nuevo avatar
+      for (const [key, clothing] of Object.entries(currentClothes)) {
+        if (clothing) {
+          attachClothing(clothing, avatar);
+        }
+      }
     },
     undefined,
     (error) => {
       console.error('Error al cargar el avatar:', error);
     }
   );
+}
+
+// Función para cargar y adjuntar ropa al avatar
+function cargarPrenda(modelPath, type) {
+  loader.load(
+    modelPath,
+    (gltf) => {
+      const clothing = gltf.scene;
+
+      // Habilitar sombras para la ropa
+      clothing.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+
+      // Si ya hay una prenda del mismo tipo, eliminarla
+      if (currentClothes[type]) {
+        scene.remove(currentClothes[type]);
+      }
+
+      // Adjuntar la nueva prenda al avatar
+      attachClothing(clothing, avatar);
+      currentClothes[type] = clothing;
+
+      // Cerrar el menú desplegable después de seleccionar una prenda
+      document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.classList.remove('open');
+      });
+    },
+    undefined,
+    (error) => {
+      console.error(`Error al cargar la prenda ${type}:`, error);
+    }
+  );
+}
+
+// Función para adjuntar ropa al esqueleto del avatar
+function attachClothing(clothing, avatar) {
+  if (!avatar) {
+    console.error('No hay avatar cargado');
+    return;
+  }
+
+  // Buscar el esqueleto del avatar
+  let avatarSkeleton = null;
+  avatar.traverse((child) => {
+    if (child.isSkinnedMesh) {
+      avatarSkeleton = child.skeleton;
+    }
+  });
+
+  if (!avatarSkeleton) {
+    console.error('No se encontró un esqueleto en el avatar');
+    return;
+  }
+
+  // Aplicar el esqueleto del avatar a la ropa
+  clothing.traverse((clothingChild) => {
+    if (clothingChild.isSkinnedMesh) {
+      clothingChild.bind(avatarSkeleton, clothingChild.matrixWorld);
+    }
+  });
+
+  scene.add(clothing);
 }
 
 // Cargar el primer avatar
@@ -94,17 +219,11 @@ controls.target.set(0, 0, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.enablePan = false;
+controls.minDistance = 2.5;
+controls.maxDistance = 2.5;
 
-// Límites de zoom para la vista general
-controls.minDistance = 1.5;
-controls.maxDistance = 1.5;
-
-// Límites de rotación vertical
-controls.minPolarAngle = Math.PI / 4;
-controls.maxPolarAngle = Math.PI / 1.5;
-
-// Función para enfocar en una parte específica del avatar con animación
-function focusOn(part) {
+// 7. Función para enfocar en una parte específica del avatar
+function focusOn(part, circle) {
   let targetPosition;
   let cameraPosition;
   let zoomLevel;
@@ -112,23 +231,23 @@ function focusOn(part) {
   switch (part) {
     case 'head':
       targetPosition = { x: 0, y: 0.5, z: 0 };
-      cameraPosition = { x: 0, y: 0.8, z: 0.5 };
-      zoomLevel = 0.5;
+      cameraPosition = { x: 0, y: 0.8, z: 1.5 };
+      zoomLevel = 1.5;
       break;
     case 'chest':
       targetPosition = { x: 0, y: 0, z: 0 };
-      cameraPosition = { x: 0, y: 0.3, z: 0.5 };
-      zoomLevel = 0.5;
+      cameraPosition = { x: 0, y: 0.3, z: 1.5 };
+      zoomLevel = 1.5;
       break;
     case 'legs':
       targetPosition = { x: 0, y: -0.8, z: 0 };
-      cameraPosition = { x: 0, y: -0.5, z: 0.5 };
-      zoomLevel = 0.5;
+      cameraPosition = { x: 0, y: -0.5, z: 1.5 };
+      zoomLevel = 1.5;
       break;
     case 'reset':
       targetPosition = { x: 0, y: 0, z: 0 };
-      cameraPosition = { x: 0, y: 1, z: 1.5 };
-      zoomLevel = 1.5;
+      cameraPosition = { x: 0, y: 0.5, z: 2.5 };
+      zoomLevel = 2.5;
       break;
   }
 
@@ -143,6 +262,9 @@ function focusOn(part) {
     .easing(TWEEN.Easing.Quadratic.InOut)
     .start();
 
+  controls.minDistance = zoomLevel;
+  controls.maxDistance = zoomLevel;
+
   // Aplicar efecto de blur
   if (part !== 'reset') {
     focusShader.uniforms.sampleDistance.value = 0.5;
@@ -152,36 +274,24 @@ function focusOn(part) {
     focusShader.uniforms.waveFactor.value = 0;
   }
 
-  // Ajustar los límites de zoom temporalmente
-  controls.minDistance = zoomLevel;
-  controls.maxDistance = zoomLevel;
-}
-
-// Importar TWEEN para animaciones
-import TWEEN from 'three/addons/libs/tween.module.js';
-
-// 7. Función para cargar prendas
-function cargarPrenda(modelPath) {
-  loader.load(
-    modelPath,
-    (gltf) => {
-      const prenda = gltf.scene;
-      prenda.scale.set(0.7, 0.7, 0.7);
-      prenda.position.set(0, -1, 0);
-      scene.add(prenda);
-    },
-    undefined,
-    (error) => {
-      console.error('Error al cargar la prenda:', error);
+  // Escalar el círculo seleccionado
+  document.querySelectorAll('.circle').forEach(c => {
+    if (c === circle) {
+      c.style.transform = 'translateX(-50%) scale(1.5)';
+      c.style.opacity = '1';
+    } else {
+      c.style.transform = 'translateX(-50%) scale(1)';
+      c.style.opacity = '0';
     }
-  );
+  });
 }
 
 // 8. Eventos para las miniaturas de ropa
 document.querySelectorAll('.ropa-item').forEach(item => {
   item.addEventListener('click', () => {
     const modelPath = item.getAttribute('data-model');
-    cargarPrenda(modelPath);
+    const type = item.getAttribute('data-type');
+    cargarPrenda(modelPath, type);
   });
 });
 
@@ -196,13 +306,43 @@ document.getElementById('change-avatar').addEventListener('click', () => {
   }
 });
 
-// 10. Eventos para los botones de zoom
-document.getElementById('zoom-head').addEventListener('click', () => focusOn('head'));
-document.getElementById('zoom-chest').addEventListener('click', () => focusOn('chest'));
-document.getElementById('zoom-legs').addEventListener('click', () => focusOn('legs'));
-document.getElementById('zoom-reset').addEventListener('click', () => focusOn('reset'));
+// 10. Eventos para los círculos clickeables
+document.querySelectorAll('.circle').forEach(circle => {
+  circle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const category = circle.getAttribute('data-category');
+    const menu = document.querySelector(`.${category}-menu`);
 
-// 11. Ajustar al redimensionar la ventana
+    // Cerrar todos los menús
+    document.querySelectorAll('.dropdown-menu').forEach(m => {
+      m.classList.remove('open');
+    });
+
+    // Abrir el menú seleccionado
+    menu.classList.add('open');
+
+    // Hacer zoom a la parte seleccionada
+    focusOn(category, circle);
+  });
+});
+
+// 11. Cerrar menús al hacer clic fuera
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.circle') && !e.target.closest('.dropdown-menu')) {
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+      menu.classList.remove('open');
+    });
+
+    // Resetear la vista y los círculos
+    focusOn('reset');
+    document.querySelectorAll('.circle').forEach(c => {
+      c.style.transform = '';
+      c.style.opacity = '1';
+    });
+  }
+});
+
+// 12. Ajustar al redimensionar la ventana
 window.addEventListener('resize', () => {
   camera.aspect = vestidorScene.clientWidth / vestidorScene.clientHeight;
   camera.updateProjectionMatrix();
@@ -212,7 +352,7 @@ window.addEventListener('resize', () => {
   focusShader.uniforms.screenHeight.value = vestidorScene.clientHeight;
 });
 
-// 12. Animación principal
+// 13. Animación principal
 function animate() {
   requestAnimationFrame(animate);
   TWEEN.update();
